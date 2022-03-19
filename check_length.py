@@ -26,7 +26,6 @@ def main():
 
     print_results(functions, args.filename, args.max_length)
 
-
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
@@ -37,11 +36,23 @@ def parse_arguments():
 
     return args
 
+def generate_report(filename: str, max_length = 30) -> tuple:
+    with open(filename, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    decls = get_function_decls(lines, 0)
+
+    defs = find_definitions(lines, decls)
+
+    functions = []
+
+    for i, d in [(k, lines[k]) for k in defs]:
+        p_len = parse_length(i, d, lines)
+        functions.append((p_len, i, d))
+
+    return calculate_score(functions, max_length)
 
 def print_results(lines: list, filename: str, max: int) -> None:
-    lines_over = 0
-    count = 0
-
     print(f"{filename.split('/')[-1].split('.')[0]}")
 
     for l in lines:
@@ -50,18 +61,30 @@ def print_results(lines: list, filename: str, max: int) -> None:
         line_num = l[1]
         if l[0] > max:
             tc.cprint(f"{l[0]:<3} {line_num:<4} {body:<70}", "red", file=sys.stderr)
-            lines_over += l[0] - max
         else:
             print(f"{l[0]:<3} {line_num:<4} {body:<70}", file=sys.stderr)
 
-    total = len(lines)
-    s1 = 100 - lines_over
-    s2 = (1 - (count / total)) * 100
-    score = 0.5 * (s1 + s2)
+    total, count, score = calculate_score(lines, max)    
 
     print(f"total={total}\nover={count}\nscore={score:.1f}")
     print("-=-=-=-=-=-=-=-=-=-=-=-=-", file=sys.stderr)
 
+def calculate_score(lines: list, max: int) -> tuple:
+    lines_over = 0
+    count = 0
+
+    for l in lines:
+        if l[0] > max:
+            lines_over += l[0] - max
+            count += 1
+
+    total = len(lines)
+
+    s1 = 100 - lines_over
+    s2 = (1 - (count / total)) * 100
+    score = 0.5 * (s1 + s2)
+
+    return (total, count, score)
 
 def get_function_decls(lines: list, start: int) -> list:
 
