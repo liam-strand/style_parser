@@ -7,7 +7,7 @@ def main():
     files = get_files(sys.argv[1])
 
     for file in files:
-        print(f"{file.split('/')[-1].split('.')[0]:8}")
+        print(f"{file.split('/')[-2]:8}")
         ll, ls, ld, ds = generate_report(file)
         print(f"{ll:>2} {ls:>5.1f} {ld:>2} {ds:>5.1f}")
 
