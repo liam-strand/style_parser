@@ -133,11 +133,12 @@ def parse_length(home: int, first: str, all_lines: list) -> int:
     for line in all_lines[start:]:
         # print(line)
         function_len += 1
-        if "/*" in line:
-            comment_level += line.count("/*")
-            continue
-        if "*/" in line:
-            comment_level -= line.count("*/")
+
+        for i in range(len(line) - 1):
+            if line[i:i + 1] == "/*":
+                comment_level += 1
+            elif line[i:i + 1] == "*/":
+                comment_level -= 1
 
         if comment_level == 0 and not squash_whitespace(line).startswith("//"):
 
