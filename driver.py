@@ -119,7 +119,7 @@ def long_output(file_zipped: list) -> str:
                     idx += 1
                     body += " " + all_lines[idx].strip()
 
-            body = body.split("{", 1)[0].split(";", 1)[0].rstrip(";{")
+            body = body.split("{", 1)[0].split(";", 1)[0].rstrip("{")
 
             if fn[0] > max_len or fn[1] > max_depth:
                 output_str += tc.colored(f"{fn[2]:<4} {body}\n", "red", attrs=["bold"])
