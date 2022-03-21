@@ -1,4 +1,5 @@
 from check_length_nesting import generate_report
+import termcolor as tc
 import sys
 import os.path
 
@@ -12,7 +13,16 @@ def main():
     for file in files:
         name = file.split('/')[-2]
         ll, ls, ld, ds = generate_report(file)
-        print(f"{name:<10} {ll:>2} {ls:>5.1f} {ld:>2} {ds:>5.1f}")
+        print(f"{name:<10}", end=" ") 
+        if ll == 0:
+            print(f"{ll:>2} {ls:>5.1f}", end=" ")
+        else:
+            tc.cprint(f"{ll:>2} {ls:>5.1f}", "red", attrs=["bold"], end=" ")
+        
+        if ld == 0:
+            print(f"{ld:>2} {ds:>5.1f}")
+        else:
+            tc.cprint(f"{ld:>2} {ds:>5.1f}", "red", attrs=["bold"])
 
     
 def get_files(start_path: str) -> list:
