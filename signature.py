@@ -62,7 +62,9 @@ def extract_signature(lines: list, idx: int) -> Signature:
         if parts:
             partial_type = parts[0]
             partial_name = " ".join(parts[1:]).strip()
-            cleaned_args.append(generate_parameter_from_pair(partial_type, partial_name))
+            cleaned_args.append(
+                generate_parameter_from_pair(partial_type, partial_name)
+            )
 
     return Signature(raw_type, raw_name, cleaned_args)
 
