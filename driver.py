@@ -97,7 +97,8 @@ def long_output(file_zipped: list) -> str:
             f"{filename.split('/')[-2]:<10} {ll:>2} {ls:>5.1f} {ld:>2} {ds:>5.1f}\n"
         )
         for fn in functions:
-            output_str += f"{fn[0]:<3} {fn[1]:<2} {fn[2]:<4} {fn[3].strip()}\n"
+            body = get_function_body(fn, all_lines)
+            output_str += f"{fn[0]:<3} {fn[1]:<2} {fn[2]:<4} {body}\n"
     else:
         output_str = tc.colored(
             f"{filename.split('/')[-2]:<10} {ll:>2} {ls:>5.1f} {ld:>2} {ds:>5.1f}\n"
@@ -112,20 +113,26 @@ def long_output(file_zipped: list) -> str:
             else:
                 output_str += f"{fn[1]:<2} "
 
-            body = fn[3].strip()
-            if not (body.endswith(";") or body.endswith("{")):
-                idx = fn[2]
-                while not (body.endswith(";") or body.endswith("{")):
-                    idx += 1
-                    body += " " + all_lines[idx].strip()
-
-            body = body.split("{", 1)[0].split(";", 1)[0].rstrip("{")
+            body = get_function_body(fn, all_lines)
 
             if fn[0] > max_len or fn[1] > max_depth:
                 output_str += tc.colored(f"{fn[2]:<4} {body}\n", "red", attrs=["bold"])
             else:
                 output_str += f"{fn[2]:<4} {body}\n"
     return output_str.strip()
+
+
+def get_function_body(function: tuple, all_lines: list) -> str:
+    body = function[3].strip()
+    if not (body.endswith(";") or body.endswith("{")):
+        idx = function[2]
+        while not (body.endswith(";") or body.endswith("{")):
+            idx += 1
+            body += " " + all_lines[idx].strip()
+
+    body = body.rstrip(";{ ")
+
+    return body
 
 
 def generate_zip(files: list, output: str, max_len: int, max_depth: int) -> list:
