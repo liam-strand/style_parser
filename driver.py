@@ -6,10 +6,13 @@ def main():
     
     files = get_files(sys.argv[1])
 
+    print("name       long_fns  deep_fns")
+    print("-----------------------------")
+
     for file in files:
-        print(f"{file.split('/')[-1]:8}")
+        name = file.split('/')[-2]
         ll, ls, ld, ds = generate_report(file)
-        print(f"{ll:>2} {ls:>5.1f} {ld:>2} {ds:>5.1f}")
+        print(f"{name:<10} {ll:>2} {ls:>5.1f} {ld:>2} {ds:>5.1f}")
 
     
 def get_files(start_path: str) -> list:
