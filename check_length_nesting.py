@@ -169,7 +169,6 @@ def parse_length(home: int, all_lines: list) -> int:
         function_len += 1
         if "/*" in line:
             comment_level += line.count("/*")
-            continue
         if "*/" in line:
             comment_level -= line.count("*/")
 
