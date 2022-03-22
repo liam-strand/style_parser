@@ -22,7 +22,7 @@ def short_function_color_printer(
     """
 
     output_str = tc.colored("")
-    output_str += f"{extract_filename(filename):<25} "
+    output_str += f"{extract_filename(filename):<30} "
     if long_funcs == 0:
         output_str += f"{long_funcs:>2} {length_score:>5.1f} "
     else:
@@ -60,7 +60,7 @@ def short_function_bw_printer(
     are printed in red.
     """
 
-    return f"{extract_filename(filename):<25} {long_funcs:>2} {length_score:>5.1f} {deep_funcs:>2} {deep_score:>5.1f}"
+    return f"{extract_filename(filename):<30} {long_funcs:>2} {length_score:>5.1f} {deep_funcs:>2} {deep_score:>5.1f}"
 
 
 def long_function_color_printer(
@@ -86,7 +86,7 @@ def long_function_color_printer(
     """
 
     output_str = tc.colored(
-        f"{extract_filename(filename):<25} {long_funcs:>2} {length_score:>5.1f} {deep_funcs:>2} {deep_score:>5.1f}\n"
+        f"{extract_filename(filename):<30} {long_funcs:>2} {length_score:>5.1f} {deep_funcs:>2} {deep_score:>5.1f}\n"
     )
     for fn in functions:
         if fn[0] > max_len:
@@ -130,7 +130,7 @@ def long_function_bw_printer(
     """
 
     # If we are writing to a file, we do not want to color the text
-    output_str = f"{extract_filename(filename):<25} {long_funcs:>2} {length_score:>5.1f} {deep_funcs:>2} {deep_score:>5.1f}\n"
+    output_str = f"{extract_filename(filename):<30} {long_funcs:>2} {length_score:>5.1f} {deep_funcs:>2} {deep_score:>5.1f}\n"
     for fn in functions:
         sig = get_function_sig(fn, all_lines)
         output_str += f"{fn[0]:<3} {fn[1]:<2} {fn[2]:<4} {sig}\n"
