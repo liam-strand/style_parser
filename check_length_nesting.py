@@ -9,6 +9,9 @@ def generate_report(filename: str, max_len: int, max_depth: int) -> tuple:
 
     decls = get_function_decls(lines, 0)
 
+    if len(decls) == 0:
+        return (0, 100.0, 0, 100.0, [], lines, filename)
+
     defs = find_definitions(lines, decls)
 
     functions = []
