@@ -106,7 +106,7 @@ def get_function_decls(lines: list, start: int) -> list:
 
         if i >= start and re.match("([^\s]+) \w*[(]", testing_line):
             found_lines.append((i, testing_line.rstrip()))
-            if start == 0 and testing_line.startswith("int main("):
+            if start == 0 and "int main(" in testing_line:
                 break
 
     for f_line in found_lines:
@@ -133,8 +133,9 @@ def find_definitions(lines: list, funcs: list) -> list:
 def parse_length(home: int, all_lines: list) -> int:
 
     start = int(home)
+
     while True:
-        if squash_whitespace(all_lines[start]).endswith("{"):
+        if "{" in all_lines[start]:
             break
         start += 1
 
@@ -156,7 +157,7 @@ def parse_length(home: int, all_lines: list) -> int:
 def parse_depth(home: int, all_lines: list) -> int:
     start = int(home)
     while True:
-        if squash_whitespace(all_lines[start]).endswith("{"):
+        if "{" in all_lines[start]:
             break
         start += 1
 
