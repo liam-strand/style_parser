@@ -86,7 +86,6 @@ def generate_zip(files: list, max_len: int, max_depth: int, printer) -> list:
 def apply_function(args: tuple) -> str:
     """TODO: Docstring for apply_function."""
     filename, max_len, max_depth, printer = args
-    print(filename)
     ll, ls, ld, ds, functions, all_lines, filename = generate_report(
         filename, max_len, max_depth
     )
