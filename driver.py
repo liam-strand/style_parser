@@ -34,13 +34,14 @@ def main():
             lines = pool.map(apply_function, zipped)
 
     # Print the results, sorted, to the correct output
-    if args.output:
+        
+    if args.output in ["-", "stdout"] or not args.output:
+        for line in sorted(lines):
+            print(line)
+    else:
         with open(args.output, "w") as f:
             for line in sorted(lines):
                 f.write(line + "\n")
-    else:
-        for line in sorted(lines):
-            print(line)
 
 
 def get_args() -> argparse.Namespace:
