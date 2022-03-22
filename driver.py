@@ -8,6 +8,7 @@ from check_length_nesting import generate_report
 import argparse
 import multiprocessing as mp
 import os.path
+from tqdm import tqdm
 
 
 def main():
@@ -28,12 +29,10 @@ def main():
     zipped = generate_zip(files, args.length, args.depth, printer)
 
     if args.nproc == 1:
-        lines = map(apply_function, zipped)
+        lines = list(tqdm(map(apply_function, zipped), total=len(zipped)))
     else:
         with mp.Pool(args.nproc) as pool:
-            lines = pool.map(apply_function, zipped)
-
-    # Print the results, sorted, to the correct output
+            lines = list(tqdm(pool.imap(apply_function, zipped), total=len(zipped)))
         
     if args.output in ["-", "stdout"] or not args.output:
         for line in sorted(lines):
@@ -41,11 +40,11 @@ def main():
     else:
         with open(args.output, "w") as f:
             for line in sorted(lines):
-                f.write(line + "\n")
+                print(line, file=f)
 
 
 def get_args() -> argparse.Namespace:
-    """ """
+    """TODO: get_args() docstring"""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-p",
@@ -71,10 +70,18 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         "-d", "--depth", help="maximum function depth", type=int, default=4
     )
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    assert(args.nproc > 0)
+    assert(args.depth > 0)
+    assert(args.length > 0)
+
+    return args
 
 
 def generate_zip(files: list, max_len: int, max_depth: int, printer) -> list:
+    """TODO: Docstring for generate_zip."""
     zipped = []
 
     for file in files:
@@ -86,13 +93,19 @@ def generate_zip(files: list, max_len: int, max_depth: int, printer) -> list:
 def apply_function(args: tuple) -> str:
     """TODO: Docstring for apply_function."""
     filename, max_len, max_depth, printer = args
-    ll, ls, ld, ds, functions, all_lines, filename = generate_report(
-        filename, max_len, max_depth
-    )
+    try:
+        ll, ls, ld, ds, functions, all_lines, filename = generate_report(
+            filename, max_len, max_depth
+        )
+    except IndexError as e:
+        print(f"error: {filename} {e}")
+        return f"{filename} ERROR"
+    
     return printer(ll, ls, ld, ds, max_len, max_depth, functions, all_lines, filename)
 
 
 def get_files(start_path: str) -> list:
+    """TODO: Docstring for get_files."""
     files = []
 
     for dirpath, _, filenames in os.walk(start_path):
