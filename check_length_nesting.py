@@ -1,25 +1,9 @@
-import argparse
 import re
-import sys
-
-import termcolor as tc
-
-from signature import *
+from pprint import pprint
+from signature import extract_signature
 
 
-def get_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("filename", type=str)
-    parser.add_argument("--max_length", "-l", type=int, default=30)
-    parser.add_argument("--max_depth", "-d", type=int, default=4)
-
-    args = parser.parse_args()
-
-    return args
-
-
-def generate_report(filename: str, max_len=30, max_depth=4) -> tuple:
+def generate_report(filename: str, max_len: int, max_depth: int) -> tuple:
     with open(filename, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -88,19 +72,39 @@ def get_function_decls(lines: list, start: int) -> list:
 
     found_lines = []
     output_lines = []
+
     comment_level = 0
-
     for i, line in enumerate(lines):
-        if "/*" in line:
-            comment_level += line.count("/*")
-        if "*/" in line:
-            comment_level -= line.count("*/")
+        in_single_line_comment = False
+        in_string = False
+        in_char = False
+        testing_line = ""
+        for j in range(len(line)):
+            (
+                comment_level,
+                in_single_line_comment,
+                in_string,
+                in_char,
+            ) = track_comments_and_junk(
+                line[j],
+                line[j - 1],
+                comment_level,
+                in_single_line_comment,
+                in_string,
+                in_char,
+            )
+            if (
+                not in_single_line_comment
+                and not in_string
+                and not in_char
+                and comment_level == 0
+            ):
+                testing_line += line[j]
 
-        if comment_level == 0 and not squash_whitespace(line).startswith("//"):
-            if i >= start and re.match("([^\s]+) \w*[(]", line):
-                found_lines.append((i, line.rstrip()))
-                if start == 0 and line.startswith("int main("):
-                    break
+        if i >= start and re.match("([^\s]+) \w*[(]", testing_line):
+            found_lines.append((i, testing_line.rstrip()))
+            if start == 0 and testing_line.startswith("int main("):
+                break
 
     for f_line in found_lines:
         tag = extract_signature(lines, f_line[0])
@@ -138,20 +142,10 @@ def parse_length(home: int, all_lines: list) -> int:
     for line in all_lines[start:]:
         function_len += 1
 
-        if "/*" in line:
-            comment_level += line.count("/*")
-        if "*/" in line:
-            comment_level -= line.count("*/")
+        comment_level, nesting = parse_line(line, comment_level, nesting)
 
-        if comment_level == 0 and not squash_whitespace(line).startswith("//"):
-
-            for char in line:
-                if char == "{":
-                    nesting += 1
-                elif char == "}":
-                    nesting -= 1
-            if nesting == 0:
-                break
+        if nesting == 0:
+            break
 
     return function_len - 2
 
@@ -168,26 +162,68 @@ def parse_depth(home: int, all_lines: list) -> int:
     max_nesting = 0
 
     for line in all_lines[start:]:
-        if "/*" in line:
-            comment_level += line.count("/*")
-            continue
-        if "*/" in line:
-            comment_level -= line.count("*/")
+        comment_level, nesting = parse_line(line, comment_level, nesting)
 
-        if comment_level == 0 and not squash_whitespace(line).startswith("//"):
-
-            for char in line:
-                if char == "{":
-                    nesting += 1
-                elif char == "}":
-                    nesting -= 1
-            if nesting == 0:
-                break
+        if nesting == 0:
+            break
 
         max_nesting = max(max_nesting, nesting)
 
-    return max_nesting
+    return max_nesting - 1
 
 
-if __name__ == "__main__":
-    print("pls don't run this file", file=sys.stderr)
+def parse_line(line: str, comment_level: int, nesting: int) -> tuple:
+
+    in_single_line_comment = False
+    in_string = False
+    in_char = False
+
+    for i in range(len(line)):
+        (
+            comment_level,
+            in_single_line_comment,
+            in_string,
+            in_char,
+        ) = track_comments_and_junk(
+            line[i],
+            line[i - 1],
+            comment_level,
+            in_single_line_comment,
+            in_string,
+            in_char,
+        )
+        should_read = (
+            not in_single_line_comment
+            and not in_string
+            and not in_char
+            and comment_level == 0
+        )
+
+        if line[i] == "{" and should_read:
+            nesting += 1
+        elif line[i] == "}" and should_read:
+            nesting -= 1
+
+    return comment_level, nesting
+
+
+def track_comments_and_junk(
+    char: str,
+    last_char: str,
+    comment_level: int,
+    in_single_line_comment: bool,
+    in_string: bool,
+    in_char: bool,
+) -> tuple:
+    if char == "/" and last_char == "/":
+        in_single_line_comment = True
+    elif last_char == "/" and char == "*":
+        comment_level += 1
+    elif last_char == "*" and char == "/":
+        comment_level -= 1
+    elif char == '"':
+        in_string = not in_string
+    elif char == "'":
+        in_char = not in_char
+
+    return comment_level, in_single_line_comment, in_string, in_char
