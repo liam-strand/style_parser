@@ -40,20 +40,23 @@ class Parameter:
         return f"({self.p_type}, {self.p_name})"
 
 
-def extract_signature(lines: list, idx: int) -> Signature:
-
-    height = 1
+def extract_signature(lines: list, idx: int, namespace = None) -> Signature:
     i = int(idx)
 
     while not any([c in lines[i] for c in ["{", ";"]]):
-        height += 1
         i += 1
 
     d = get_full_string(lines, idx, i + 1)
 
     splitted = re.split("\s|\(", d)
-    raw_type = splitted[0]
-    raw_name = splitted[1]
+ 
+    if namespace and splitted[0] == namespace:
+        raw_type = ""
+        raw_name = splitted[0]
+    else:
+        raw_type = splitted[0]
+        raw_name = splitted[1]
+
     raw_args = " ".join(splitted[2:]).rstrip("); {").split(", ")
 
     cleaned_args = []
@@ -66,6 +69,9 @@ def extract_signature(lines: list, idx: int) -> Signature:
                 generate_parameter_from_pair(partial_type, partial_name)
             )
 
+
+    raw_type.split("::")[-1]
+    
     return Signature(raw_type, raw_name, cleaned_args)
 
 
@@ -74,9 +80,9 @@ def generate_parameter_from_pair(type_ish: str, name_ish: str) -> Parameter:
     working_type = str(type_ish)
     working_name = str(name_ish)
 
-    while working_name.startswith("*"):
-        working_type += "*"
-        working_name = working_name.removeprefix("*")
+    while working_name.startswith(("*", "&")):
+        working_type += working_name[0]
+        working_name = working_name[1:]
 
     arr_indicator = ""
     new_name = ""
@@ -92,6 +98,9 @@ def generate_parameter_from_pair(type_ish: str, name_ish: str) -> Parameter:
             new_name += char
 
     new_type = working_type + arr_indicator
+
+    new_name = new_name.split("::")[-1]
+    new_type = new_type.split("::")[-1]
 
     return Parameter(new_type, new_name)
 

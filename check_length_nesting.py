@@ -1,9 +1,8 @@
 import re
-from pprint import pprint
 from signature import extract_signature
 
 
-def generate_report(filename: str, max_len: int, max_depth: int) -> tuple:
+def generate_report_singlefile(filename: str, max_len: int, max_depth: int) -> tuple:
     with open(filename, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -34,6 +33,34 @@ def generate_report(filename: str, max_len: int, max_depth: int) -> tuple:
         filename,
     )
 
+def generate_report_multifile(source: str, header: str, max_len: int, max_depth: int) -> list:
+
+    with open(source, "r", encoding="utf-8") as f:
+        source_lines = f.readlines()
+
+    decls = get_function_decls(source_lines, 0, header.split("/")[-1].removesuffix(".h"))
+
+    functions = []
+
+    defs = [d[0] for d in decls]
+
+    for i, d in [(k, source_lines[k]) for k in defs]:
+        p_len = parse_length(i, source_lines)
+        p_depth = parse_depth(i, source_lines)
+        functions.append((p_len, p_depth, i, d))
+
+    lines_long, lines_score = calculate_line_score(functions, max_len)
+    lines_deep, nestd_score = calculate_deep_score(functions, max_depth)
+
+    return (
+        lines_long,
+        lines_score,
+        lines_deep,
+        nestd_score,
+        functions,
+        source_lines,
+        source,
+    )
 
 def calculate_line_score(lines: list, max_len: int) -> tuple:
     lines_over = 0
@@ -71,7 +98,7 @@ def calculate_deep_score(lines: list, max_depth: int) -> tuple:
     return (count, score)
 
 
-def get_function_decls(lines: list, start: int) -> list:
+def get_function_decls(lines: list, start: int, header = None) -> list:
 
     found_lines = []
     output_lines = []
@@ -104,13 +131,20 @@ def get_function_decls(lines: list, start: int) -> list:
             ):
                 testing_line += line[j]
 
-        if i >= start and re.match("([^\s]+) \w*[(]", testing_line):
+        if header and testing_line.startswith((f"{header}::{header}(", f"{header}::~{header}(")):
+                found_lines.append((i, testing_line.rstrip()))
+                
+
+        elif i >= start and (re.match("^([^\s]+) [\w:]*[(]", testing_line)):
             found_lines.append((i, testing_line.rstrip()))
             if start == 0 and "int main(" in testing_line:
                 break
 
     for f_line in found_lines:
-        tag = extract_signature(lines, f_line[0])
+        if header:
+            tag = extract_signature(lines, f_line[0], header)
+        else:
+            tag = extract_signature(lines, f_line[0])
         if not tag in [sig[1] for sig in output_lines]:
             output_lines.append((f_line[0], tag))
 
